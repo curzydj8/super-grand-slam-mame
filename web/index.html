@@ -3,40 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>超级大满贯 · MAME 街机版</title>
-<meta name="description" content="网页版 MAME 模拟器，手机触屏 / 电脑鼠标即点即玩超级大满贯街机版。ROM 需自备。">
-<link rel="stylesheet" href="css/style.css?v=20261003a">
+<title>超级大满贯II · MAME 街机版</title>
+<meta name="description" content="超级大满贯II（IGS 1997）网页版：ROM 已存云端，点按进入自动全屏横屏，手机触屏 / 电脑鼠标即点即玩。">
+<link rel="stylesheet" href="css/style.css?v=20261003b">
 </head>
 <body>
 <header class="top">
   <div class="top-inner">
     <div class="logo">🀄</div>
     <div>
-      <div class="title">超级大满贯 · MAME 街机版</div>
-      <div class="subtitle">手机触屏点按 / 电脑鼠标点击 · 打开即玩</div>
+      <div class="title">超级大满贯II · MAME 街机版</div>
+      <div class="subtitle">ROM 已存云端 · 点按进入自动全屏横屏 · 触屏/鼠标即点即玩</div>
     </div>
   </div>
 </header>
 
 <main>
-  <!-- ROM 载入 -->
-  <section id="rom-screen" class="card">
-    <h2>载入 ROM</h2>
-    <p class="muted">本站不提供任何 ROM，请使用你自己合法拥有的 ROM 文件（zip 格式，MAME 0.78 版本兼容性最好）。ROM 只保存在你的本机，不会上传。</p>
-    <label class="btn primary big file-btn">选择 ROM 文件（手机/电脑）
-      <input type="file" id="rom-file" accept=".zip,application/zip" hidden>
-    </label>
-    <div class="row">
-      <input id="rom-url" placeholder="或粘贴 ROM 的直链地址（https://…zip）">
-      <button class="btn" id="btn-url">载入</button>
-    </div>
-    <div class="row cores">
-      <span class="muted">模拟器核心：</span>
-      <label><input type="radio" name="core" value="mame2003" checked> mame2003（MAME 0.78，兼容性最广）</label>
-      <label><input type="radio" name="core" value="mame2003_plus"> mame2003-plus（更新，个别 ROM 需要）</label>
-    </div>
-    <div id="cache-info" class="cache-info"></div>
-    <div id="rom-status" class="status"></div>
+  <!-- 点按进入封面 -->
+  <section id="enter-overlay" class="card enter">
+    <div class="enter-mj">🀄</div>
+    <h2>超级大满贯II</h2>
+    <p class="muted">IGS 1997 · 街机麻将 · ROM 已为你存在云端，无需再传</p>
+    <button class="btn primary big" id="btn-enter">点击进入游戏</button>
+    <p class="muted small">进入后自动全屏 + 横屏，直接点下面的按键玩</p>
   </section>
 
   <!-- 游戏 -->
@@ -45,10 +34,9 @@
       <div id="game"></div>
       <div id="emu-status" class="status"></div>
       <div class="toolbar">
-        <button class="btn small" id="btn-fullscreen">全屏</button>
+        <button class="btn small" id="btn-fullscreen">全屏 / 横屏</button>
         <button class="btn small" id="btn-rebind">按键设置</button>
         <button class="btn small ghost" id="btn-reset-keys">恢复默认键位</button>
-        <button class="btn small ghost" id="btn-change-rom">更换 ROM</button>
       </div>
       <div id="rebind-hint" class="hint" hidden></div>
       <div id="pad" class="pad"></div>
@@ -57,20 +45,38 @@
     <details class="card help">
       <summary>玩法说明与按键表</summary>
       <ol>
-        <li>点「投币」再点「开始」进入游戏（街机流程）。</li>
-        <li>手机直接用手指点下面的麻将按键；电脑用鼠标点击，或用键盘。</li>
-        <li>「按键设置」可以把每个按钮重绑到任意键盘按键（需要物理键盘，手机上请用默认键位）。</li>
+        <li>进入游戏后先点「投幣」，再点「開始」（街机流程）。</li>
+        <li>手机直接用手指点按键；电脑用鼠标点击，或用键盘（键位见下表，可重绑）。</li>
+        <li>「按键设置」可以把每个按钮重绑到任意键盘按键（需要物理键盘）。</li>
         <li>如果按键没反应：点模拟器画面右上角菜单 → Quick Menu → Options → 把 Input Interface 设为 simultaneous 或 keyboard。</li>
         <li>模拟器自带存档：画面菜单 → Save State / Load State。</li>
       </ol>
       <table id="key-table" class="key-table"></table>
     </details>
+
+    <details class="card help">
+      <summary>手动载入 ROM（云端 ROM 载入失败时用）</summary>
+      <p class="muted">正常情况下不需要这里。ROM 只保存在你的本机，不会上传。</p>
+      <label class="btn small file-btn">选择 ROM 文件（.zip）
+        <input type="file" id="rom-file" accept=".zip,application/zip" hidden>
+      </label>
+      <div class="row">
+        <input id="rom-url" placeholder="或粘贴 ROM 的直链地址（https://…zip）">
+        <button class="btn small" id="btn-url">载入</button>
+      </div>
+      <div class="row cores">
+        <span class="muted">核心：</span>
+        <label><input type="radio" name="core" value="mame2003_plus" checked> mame2003-plus</label>
+        <label><input type="radio" name="core" value="mame2003"> mame2003</label>
+      </div>
+      <div id="rom-status" class="status"></div>
+    </details>
   </section>
 </main>
 
-<footer class="foot muted">MAME 核心来自 EmulatorJS（mame2003）。ROM 请自备，本站不分发任何游戏文件。</footer>
+<footer class="foot muted">MAME 核心来自 EmulatorJS。ROM 为你个人存档，请仅用于自己合法拥有的游戏。</footer>
 
-<script src="js/keys.js?v=20261003a"></script>
-<script src="js/app.js?v=20261003a"></script>
+<script src="js/keys.js?v=20261003b"></script>
+<script src="js/app.js?v=20261003b"></script>
 </body>
 </html>
