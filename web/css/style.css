@@ -66,6 +66,19 @@ h2 { margin: 0 0 10px; font-size: 18px; }
 .key-table .mono { font-family: monospace; color: var(--acc); }
 .foot { text-align: center; padding: 18px; font-size: 12px; }
 
+/* 点按进入封面 */
+.enter { text-align: center; padding: 48px 20px; }
+.enter-mj { font-size: 72px; }
+.enter h2 { font-size: 26px; margin: 10px 0 6px; }
+.enter .btn.big { margin: 18px 0 6px; }
+.muted.small { font-size: 12px; }
+
+/* 分组按键 */
+.pad { display: block; padding: 10px 12px 16px; background: #0d1320; }
+.pad-group { margin-bottom: 10px; }
+.pad-group-title { font-size: 12px; color: var(--muted); margin: 6px 2px; }
+.pad-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: 10px; }
+
 @media (max-width: 640px) {
   .pad { grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); gap: 8px; padding: 10px 8px 12px; }
   .pad-btn { min-height: 62px; }
