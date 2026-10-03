@@ -1,5 +1,5 @@
-/* 超级大满贯 MAME 网页版 · app.js
- * ROM 载入（文件/URL/IndexedDB 缓存）+ EmulatorJS 启动 + 触屏/鼠标麻将按键。
+/* 超级大满贯II (sdmg2) · app.js
+ * 云端 ROM 自动载入 + 点按进入（全屏+横屏）+ EmulatorJS 启动 + 触屏/鼠标麻将按键。
  */
 (() => {
 "use strict";
@@ -7,7 +7,11 @@
 const NS = (window.SGM = window.SGM || {});
 const $ = id => document.getElementById(id);
 
-/* ---------------- IndexedDB：ROM 本地缓存（只存本机） ---------------- */
+/* 云端 ROM：随页面一起部署，用户打开即用，无需自己传 ROM */
+const CLOUD_ROM_URL = "roms/sdmg2.zip";
+const CLOUD_ROM_NAME = "sdmg2";
+
+/* ---------------- IndexedDB：手动载入的 ROM 本地缓存（只存本机） ---------------- */
 const IDB = {
   DB: "sgm-mame", STORE: "roms", KEY: "last",
   open() {
@@ -57,18 +61,40 @@ function sendKey(code, down) {
   document.dispatchEvent(new KeyboardEvent(down ? "keydown" : "keyup", init));
 }
 
+/* ---------------- 全屏 + 横屏 ---------------- */
+async function enterFullscreenLandscape() {
+  const wrap = $("game-wrap");
+  try {
+    if (document.fullscreenElement) { /* 已在全屏 */ }
+    else if (wrap.requestFullscreen) await wrap.requestFullscreen();
+    else if (wrap.webkitRequestFullscreen) await wrap.webkitRequestFullscreen();
+  } catch (e) { /* 用户拒绝或不支持：继续 */ }
+  try {
+    if (screen.orientation && screen.orientation.lock) {
+      await screen.orientation.lock("landscape");
+    }
+  } catch (e) { /* iOS 等不支持横屏锁定：继续 */ }
+}
+function toggleFullscreen() {
+  const wrap = $("game-wrap");
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(() => {});
+    try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
+  } else {
+    enterFullscreenLandscape();
+  }
+}
+
 /* ---------------- 模拟器启动 ---------------- */
 let booted = false;
 function bootEmulator({ core, gameUrl, gameName }) {
   if (booted) return;
   booted = true;
-  $("rom-screen").hidden = true;
-  $("game-screen").hidden = false;
   window.EJS_player = "#game";
   window.EJS_core = core;
   window.EJS_gameUrl = gameUrl;
   window.EJS_pathtodata = "ejs/data/";
-  window.EJS_gameName = gameName || "超级大满贯";
+  window.EJS_gameName = gameName || "超级大满贯II";
   window.EJS_startOnLoaded = true;
   const s = document.createElement("script");
   s.src = "ejs/data/loader.js";
@@ -77,21 +103,57 @@ function bootEmulator({ core, gameUrl, gameName }) {
   window.scrollTo(0, 0);
 }
 
-/* ---------------- 按键面板 ---------------- */
+/* 点按进入：隐藏封面 → 全屏横屏 → 从云端自动载入 ROM 启动 */
+async function enterGame() {
+  if (booted) return;
+  $("enter-overlay").hidden = true;
+  $("game-screen").hidden = false;
+  buildPanel();
+  bindPanel();
+  await enterFullscreenLandscape();
+  bootEmulator({ core: selectedCore(), gameUrl: CLOUD_ROM_URL, gameName: CLOUD_ROM_NAME });
+}
+
+/* ---------------- 按键面板（按 系统/牌鍵/功能 分组） ---------------- */
 let keymap = NS.Keys.loadKeymap();
 let rebindMode = false;
 let rebindTarget = null;
+let panelBound = false;
 
 function buildPanel() {
   const panel = $("pad");
   panel.innerHTML = "";
+  const groups = {};
   for (const b of NS.Keys.BUTTONS) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "pad-btn " + b.group;
-    btn.dataset.bid = b.id;
-    btn.innerHTML = `<span class="pad-label">${b.label}</span><span class="pad-key">${NS.Keys.keyLabel(keymap[b.id])}</span>`;
-    panel.appendChild(btn);
+    (groups[b.group] = groups[b.group] || []).push(b);
+  }
+  for (const g of ["sys", "mj", "fn"]) {
+    if (!groups[g]) continue;
+    const sec = document.createElement("div");
+    sec.className = "pad-group pad-group-" + g;
+    const h = document.createElement("div");
+    h.className = "pad-group-title";
+    h.textContent = NS.Keys.GROUP_NAMES[g];
+    sec.appendChild(h);
+    const grid = document.createElement("div");
+    grid.className = "pad-grid";
+    for (const b of groups[g]) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "pad-btn " + b.group;
+      btn.dataset.bid = b.id;
+      const lab = document.createElement("span");
+      lab.className = "pad-label";
+      lab.textContent = b.label;
+      const key = document.createElement("span");
+      key.className = "pad-key";
+      key.textContent = NS.Keys.keyLabel(keymap[b.id]);
+      btn.appendChild(lab);
+      btn.appendChild(key);
+      grid.appendChild(btn);
+    }
+    sec.appendChild(grid);
+    panel.appendChild(sec);
   }
   refreshHelpTable();
 }
@@ -108,11 +170,14 @@ function setRebindMode(on) {
   rebindTarget = null;
   $("btn-rebind").classList.toggle("on", on);
   $("rebind-hint").hidden = !on;
+  if (on) $("rebind-hint").textContent = "点一个按钮，再按键盘上的按键进行绑定（Esc 取消）";
   document.querySelectorAll(".pad-btn").forEach(el => el.classList.toggle("arming", on));
 }
 
 /* 面板事件：pointerdown 发 keydown，pointerup/cancel/leave 发 keyup */
 function bindPanel() {
+  if (panelBound) return;
+  panelBound = true;
   const panel = $("pad");
   const down = e => {
     const btn = e.target.closest(".pad-btn");
@@ -123,7 +188,8 @@ function bindPanel() {
       rebindTarget = bid;
       document.querySelectorAll(".pad-btn").forEach(el => el.classList.remove("waiting"));
       btn.classList.add("waiting");
-      $("rebind-hint").textContent = `请按下键盘上的按键，绑定「${btn.querySelector(".pad-label").textContent}」（Esc 取消）`;
+      const label = btn.querySelector(".pad-label").textContent;
+      $("rebind-hint").textContent = `请按下键盘上的按键，绑定「${label}」（Esc 取消）`;
       return;
     }
     btn.classList.add("pressed");
@@ -159,60 +225,13 @@ function bindPanel() {
   }, true);
 }
 
-/* ---------------- 全屏 ---------------- */
-function toggleFullscreen() {
-  const wrap = $("game-wrap");
-  if (document.fullscreenElement) {
-    document.exitFullscreen();
-  } else if (wrap.requestFullscreen) {
-    wrap.requestFullscreen();
-  } else if (wrap.webkitRequestFullscreen) {
-    wrap.webkitRequestFullscreen();
-  }
-}
-
-/* ---------------- 启动流程 ---------------- */
-function fmtSize(n) {
-  if (!n && n !== 0) return "";
-  return n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB";
-}
-
-async function refreshCacheUI() {
-  const box = $("cache-info");
-  try {
-    const rec = await IDB.load();
-    if (rec) {
-      box.innerHTML = `已缓存：<b>${rec.name}</b>（${fmtSize(rec.data.byteLength)}）` +
-        ` <button class="btn small" id="btn-start-cached">开始游戏</button>` +
-        ` <button class="btn small ghost" id="btn-clear-cache">清除缓存</button>`;
-      $("btn-start-cached").onclick = () => startFromCache();
-      $("btn-clear-cache").onclick = async () => {
-        await IDB.clear();
-        sessionStorage.removeItem("sgm.autoboot");
-        refreshCacheUI();
-      };
-    } else {
-      box.innerHTML = `<span class="muted">还没有缓存的 ROM。首次载入后会自动保存在本机，下次一点即玩。</span>`;
-    }
-  } catch (e) {
-    box.innerHTML = `<span class="muted">浏览器不支持本地缓存，每次需要重新选择 ROM。</span>`;
-  }
-}
-
+/* ---------------- 手动 ROM 兜底（云端 ROM 载入失败时用） ---------------- */
 function selectedCore() {
   const el = document.querySelector('input[name="core"]:checked');
-  return el ? el.value : "mame2003";
+  return el ? el.value : "mame2003_plus";
 }
 
-async function startFromCache() {
-  const rec = await IDB.load();
-  if (!rec) return;
-  const url = URL.createObjectURL(new Blob([rec.data], { type: "application/zip" }));
-  sessionStorage.setItem("sgm.autoboot", JSON.stringify({ core: selectedCore(), name: rec.name }));
-  bootEmulator({ core: selectedCore(), gameUrl: url, gameName: rec.name.replace(/\.zip$/i, "") });
-}
-
-function bindRomScreen() {
+function bindFallback() {
   $("rom-file").addEventListener("change", async e => {
     const f = e.target.files[0];
     if (!f) return;
@@ -221,8 +240,8 @@ function bindRomScreen() {
       const buf = await f.arrayBuffer();
       try { await IDB.save(f.name, buf); } catch (_e) {}
       const url = URL.createObjectURL(new Blob([buf], { type: "application/zip" }));
-      sessionStorage.setItem("sgm.autoboot", JSON.stringify({ core: selectedCore(), name: f.name }));
       bootEmulator({ core: selectedCore(), gameUrl: url, gameName: f.name.replace(/\.zip$/i, "") });
+      $("rom-status").textContent = "";
     } catch (err) {
       $("rom-status").textContent = "读取失败：" + err.message;
     }
@@ -231,45 +250,25 @@ function bindRomScreen() {
   $("btn-url").addEventListener("click", () => {
     const url = $("rom-url").value.trim();
     if (!url) { $("rom-status").textContent = "请先填写 ROM 地址。"; return; }
-    sessionStorage.setItem("sgm.autoboot", JSON.stringify({ core: selectedCore(), name: "url-rom" }));
-    bootEmulator({ core: selectedCore(), gameUrl: url, gameName: "超级大满贯" });
+    bootEmulator({ core: selectedCore(), gameUrl: url, gameName: "手动载入" });
   });
 }
 
 function bindGameScreen() {
+  $("btn-enter").addEventListener("click", enterGame);
   $("btn-fullscreen").addEventListener("click", toggleFullscreen);
   $("btn-rebind").addEventListener("click", () => setRebindMode(!rebindMode));
   $("btn-reset-keys").addEventListener("click", () => {
     keymap = NS.Keys.resetKeymap();
     buildPanel();
   });
-  $("btn-change-rom").addEventListener("click", () => {
-    sessionStorage.removeItem("sgm.autoboot");
-    location.reload();
-  });
 }
 
 /* ---------------- 入口 ---------------- */
-async function init() {
-  buildPanel();
-  bindPanel();
-  bindRomScreen();
+function init() {
   bindGameScreen();
-  await refreshCacheUI();
-  /* 更换 ROM 后的自动续玩 */
-  const auto = sessionStorage.getItem("sgm.autoboot");
-  if (auto && !booted) {
-    try {
-      const { core, name } = JSON.parse(auto);
-      const rec = await IDB.load();
-      if (rec) {
-        const url = URL.createObjectURL(new Blob([rec.data], { type: "application/zip" }));
-        const coreEl = document.querySelector(`input[name="core"][value="${core}"]`);
-        if (coreEl) coreEl.checked = true;
-        bootEmulator({ core: core || "mame2003", gameUrl: url, gameName: (name || "sgm").replace(/\.zip$/i, "") });
-      }
-    } catch (e) {}
-  }
+  bindFallback();
+  refreshHelpTable();
 }
 
 if (typeof document !== "undefined") {
@@ -277,7 +276,7 @@ if (typeof document !== "undefined") {
   else init();
 }
 
-NS.App = { IDB, sendKey, codeToKey, bootEmulator, fmtSize, selectedCore: null };
+NS.App = { IDB, sendKey, codeToKey, bootEmulator, enterGame, enterFullscreenLandscape, selectedCore, CLOUD_ROM_URL, CLOUD_ROM_NAME };
 
 if (typeof module !== "undefined") module.exports = NS.App;
 })();
