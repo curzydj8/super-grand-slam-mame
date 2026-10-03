@@ -31,10 +31,26 @@
   </div>
 
   <div class="card">
-    <h2>⬇️ 第一步：下载模拟器</h2>
-    <p>MAME4droid (0.139u1) - 开源免费的 MAME 安卓移植版</p>
-    <a class="btn" href="https://apkpure.com/mame4droid-0-139u1/com.seleuco.mame4droid/download" target="_blank">下载 MAME4droid APK (35.9MB)</a>
+    <h2>🎮 方案二：RetroArch + 29键定制触控（推荐）</h2>
+    <p>专为超級大滿貫II 定制的 29 键触控布局：投幣/開始/退幣/查帳 + A-N牌鍵 + 吃/碰/槓/聽/胡/押注/比倍/大/小/海底/得分，一键即按。</p>
+    <a class="btn" href="overlays/sdmg2_overlay.cfg" download>下载触控配置 (.cfg)</a>
+    <a class="btn btn-secondary" href="overlays/sdmg2_overlay.png" download>下载触控皮肤 (.png)</a>
+    <div class="step"><span class="step-num">1.</span> 在 Google Play 安装 <strong>RetroArch</strong>（免费开源）</div>
+    <div class="step"><span class="step-num">2.</span> RetroArch 内：在线更新 → 下载核心 → 选 <strong>MAME 2010</strong> (mame2010_libretro)</div>
+    <div class="step"><span class="step-num">3.</span> 把 <code>sdmg2.zip</code>（上方下载，不解压）放入 RetroArch 的 ROM 目录</div>
+    <div class="step"><span class="step-num">4.</span> 把下载的 <code>sdmg2_overlay.cfg</code> 和 <code>sdmg2_overlay.png</code> 放入手机 <code>RetroArch/overlays/</code> 目录（两个文件放一起）</div>
+    <div class="step"><span class="step-num">5.</span> RetroArch 设置 → 屏幕显示 → 覆盖 → 覆盖预设 → 选择 <code>sdmg2_overlay.cfg</code></div>
+    <div class="step"><span class="step-num">6.</span> 载入 sdmg2.zip，横屏，29 个金色按键即点即用</div>
+  </div>
+
+  <div class="card">
+    <h2>⬇️ 方案一：MAME4droid（通用）</h2>
+    <p>MAME4droid (0.139u1) - 开源免费的 MAME 安卓移植版（默认键位需手动映射）</p>
+    <a class="btn btn-secondary" href="https://apkpure.com/mame4droid-0-139u1/com.seleuco.mame4droid/download" target="_blank">下载 MAME4droid APK (35.9MB)</a>
     <p style="color:#888;font-size:14px;">包名: com.seleuco.mame4droid<br>需要: Android 2.3 以上</p>
+    <div class="step"><span class="step-num">1.</span> 安装 APK（允许安装未知来源应用）</div>
+    <div class="step"><span class="step-num">2.</span> 把 <code>sdmg2.zip</code> 复制到 <code>/sdcard/MAME4droid/roms/</code>（不要解压）</div>
+    <div class="step"><span class="step-num">3.</span> 在 MAME4droid 里找到 <code>sdmg2</code> 运行，进游戏后按 TAB 可重映射键位</div>
   </div>
 
   <div class="card">
@@ -43,20 +59,10 @@
     <a class="btn btn-secondary" href="roms/sdmg2.zip" download>下载 sdmg2.zip (1.05MB)</a>
   </div>
 
-  <div class="card">
-    <h2>📋 第三步：安装步骤</h2>
-    <div class="step"><span class="step-num">1.</span> 安装 MAME4droid APK（允许安装未知来源应用）</div>
-    <div class="step"><span class="step-num">2.</span> 打开 MAME4droid，记下 ROM 路径（一般是 <code>/sdcard/MAME4droid/roms/</code>）</div>
-    <div class="step"><span class="step-num">3.</span> 把下载的 <code>sdmg2.zip</code> 复制到 ROM 文件夹（不要解压！）</div>
-    <div class="step"><span class="step-num">4.</span> 在 MAME4droid 里刷新，找到 <code>sdmg2</code> 点击运行</div>
-    <div class="step"><span class="step-num">5.</span> 投币键 / 开始键在屏幕触控设置里</div>
-  </div>
-
   <div class="warning">
     ⚠️ <strong>注意</strong><br>
-    MAME4droid 是模拟器，不含游戏 ROM。<br>
-    sdmg2.zip 需自行确认拥有合法使用权。
-  </div>
+    模拟器不含游戏 ROM。<br>
+    sdmg2.zip 需自行确认拥有合法使用权。</div>
 
   <div class="back"><a href="index.html">← 返回网页版</a></div>
 </div>
