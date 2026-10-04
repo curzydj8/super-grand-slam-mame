@@ -383,7 +383,7 @@
 
   /* ========== 顶部牌墙（一排红牌背） ========== */
   function drawWall(ctx, game) {
-    var n = Math.min(13, Math.ceil(game.wall.length / 8));
+    var n = 13;
     var bw = 28, bh = 22;
     var totalW = n * (bw + 1);
     var x0 = Math.round((W - totalW) / 2);
@@ -399,7 +399,7 @@
     ctx.fillStyle = '#5d4037';
     rr(ctx, x, y, w, h, 6);
     ctx.fill();
-    // 简化人物：脸
+    // 脸
     ctx.fillStyle = '#ffccaa';
     ctx.beginPath();
     ctx.ellipse(x + w / 2, y + 52, 28, 34, 0, 0, 7);
@@ -419,15 +419,17 @@
     ctx.strokeStyle = '#b71c1c';
     ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(x + w / 2, y + 68, 8, 0.3, Math.PI - 0.3); ctx.stroke();
-    // 身体/衣服（格纹示意）
-    ctx.fillStyle = '#eceff1';
+    // 衣服（格纹衬衫示意）
+    ctx.fillStyle = '#37474f';
     rr(ctx, x + 8, y + 92, w - 16, h - 100, 4);
     ctx.fill();
-    ctx.strokeStyle = '#78909c';
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
     ctx.lineWidth = 1;
-    for (var i = 0; i < 5; i++) {
-      ctx.beginPath(); ctx.moveTo(x + 12 + i * 20, y + 94); ctx.lineTo(x + 12 + i * 20, y + h - 6); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(x + 10, y + 98 + i * 12); ctx.lineTo(x + w - 10, y + 98 + i * 12); ctx.stroke();
+    for (var i = 0; i < 4; i++) {
+      ctx.beginPath(); ctx.moveTo(x + 14 + i * 26, y + 94); ctx.lineTo(x + 14 + i * 26, y + h - 8); ctx.stroke();
+    }
+    for (var j = 0; j < 3; j++) {
+      ctx.beginPath(); ctx.moveTo(x + 10, y + 100 + j * 16); ctx.lineTo(x + w - 10, y + 100 + j * 16); ctx.stroke();
     }
   }
 
