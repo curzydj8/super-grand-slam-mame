@@ -289,9 +289,9 @@
   function drawTitle(ctx, game) {
     var txt = UI.announce;
     if (!txt) {
-      // 待机标题
+      // 待机标题：金色渐变（原版风格）
       if (game.state === ST.IDLE || game.state === ST.BET || game.state === ST.GAMEOVER) {
-        goldText(ctx, '超級大滿貫II', 256, 42, 40);
+        goldText(ctx, '超級大滿貫II', 256, 42, 38);
       }
       return;
     }
