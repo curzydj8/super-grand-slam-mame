@@ -1,23 +1,18 @@
-/* 超級大滿貫II · UI（忠实原版 512×240 布局）
- * 布局考据（实机截图）：
- * - 灰底格纹、顶部金色大字公告
- * - 中部：役滿/合計/點 + 深红底金边 CREDIT/BET框
- * - 底部：玩家14张牌（白底红边）
- * - 左侧：CPU牌（1明+4暗）
+/* 超級大滿貫II · UI（1:1 还原实机截图）
+ * 512×240，灰底细格纹、金色大字、深红CREDIT框、白底红边牌
  */
 (function (g) {
   'use strict';
-  var Tiles = g.MahjongTiles;
   var ST = g.SDMG2_ST;
 
   var W = 512, H = 240;
 
   var UI = {
     canvas: null, ctx: null, game: null,
-    scale: 1, offsetX: 0, offsetY: 0,
+    scale: 1,
     selected: -1,
     announce: '', announceSub: '',
-    tileRects: []
+    tileRects: [], buttons: []
   };
 
   function init(canvasId, game) {
@@ -26,18 +21,14 @@
     UI.ctx = UI.canvas.getContext('2d');
     resize();
     window.addEventListener('resize', resize);
-
     game.on('update', render);
     game.on('win', onWin);
-
     UI.canvas.addEventListener('click', onClick);
     UI.canvas.addEventListener('touchstart', function (e) {
       e.preventDefault();
       var t = e.touches[0];
       onClick({ clientX: t.clientX, clientY: t.clientY });
     }, { passive: false });
-
-    // 键盘
     document.addEventListener('keydown', onKey);
     render();
   }
@@ -46,95 +37,39 @@
     var ww = window.innerWidth, wh = window.innerHeight;
     var s = Math.min(ww / W, wh / H);
     UI.scale = s;
-    UI.canvas.width = W * s;
-    UI.canvas.height = H * s;
-    UI.canvas.style.width = W * s + 'px';
-    UI.canvas.style.height = H * s + 'px';
-    UI.offsetX = (ww - W * s) / 2;
-    UI.offsetY = (wh - H * s) / 2;
+    UI.canvas.width = Math.round(W * s);
+    UI.canvas.height = Math.round(H * s);
+    UI.canvas.style.width = Math.round(W * s) + 'px';
+    UI.canvas.style.height = Math.round(H * s) + 'px';
     UI.canvas.style.position = 'absolute';
-    UI.canvas.style.left = UI.offsetX + 'px';
-    UI.canvas.style.top = UI.offsetY + 'px';
+    UI.canvas.style.left = Math.round((ww - W * s) / 2) + 'px';
+    UI.canvas.style.top = Math.round((wh - H * s) / 2) + 'px';
   }
 
   function onWin(info) {
     if (info.winner === 'player') {
-      if (info.yakuman) {
-        UI.announce = info.yakuList[0].name;
-        UI.announceSub = '役滿';
-      } else {
-        UI.announce = '人胡';
-        UI.announceSub = '';
-      }
-    } else if (info.winner === 'cpu') {
-      UI.announce = '電腦胡';
-      UI.announceSub = '';
-    } else {
-      UI.announce = '流局';
-      UI.announceSub = '';
-    }
-    setTimeout(function () { UI.announce = ''; UI.announceSub = ''; render(); }, 4000);
+      if (info.yakuman) { UI.announce = info.yakuList[0].name; UI.announceSub = '役滿'; }
+      else { UI.announce = '人胡'; UI.announceSub = ''; }
+    } else if (info.winner === 'cpu') { UI.announce = '電腦胡'; UI.announceSub = ''; }
+    else { UI.announce = '流局'; UI.announceSub = ''; }
+    setTimeout(function () { UI.announce = ''; UI.announceSub = ''; render(); }, 5000);
   }
 
-  /* 背景：灰底细格纹 */
+  /* ========== 背景：灰底 + 细十字格纹 ========== */
   function drawBG(ctx) {
-    ctx.fillStyle = '#8a8a8a';
+    ctx.fillStyle = '#8b8b8b';
     ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = '#868686';
-    for (var y = 0; y < H; y += 8)
-      for (var x = 0; x < W; x += 8)
-        if (((x + y) / 8) % 2 === 0) ctx.fillRect(x, y, 4, 4);
+    // 细格纹：小十字点阵
+    ctx.fillStyle = '#7e7e7e';
+    for (var y = 4; y < H; y += 8) {
+      for (var x = 4; x < W; x += 8) {
+        ctx.fillRect(x, y, 3, 1);
+        ctx.fillRect(x + 1, y - 1, 1, 3);
+      }
+    }
   }
 
-  /* 金色大字 */
-  function goldText(ctx, str, x, y, size) {
-    ctx.font = 'bold ' + size + 'px "Noto Sans TC","Microsoft JhengHei",sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    var grd = ctx.createLinearGradient(0, y - size / 2, 0, y + size / 2);
-    grd.addColorStop(0, '#ff6b35');
-    grd.addColorStop(0.4, '#ffd700');
-    grd.addColorStop(0.6, '#fff8dc');
-    grd.addColorStop(1, '#ff8c00');
-    ctx.fillStyle = grd;
-    ctx.strokeStyle = '#8b0000';
-    ctx.lineWidth = 2;
-    ctx.strokeText(str, x, y);
-    ctx.fillText(str, x, y);
-  }
-
-  /* CREDIT/BET 框 */
-  function drawCreditBox(ctx, game) {
-    var x = 165, y = 140, w = 170, h = 52;
-    // 金边
-    ctx.fillStyle = '#d4af37';
-    roundRect(ctx, x - 3, y - 3, w + 6, h + 6, 8);
-    ctx.fill();
-    // 深红底
-    ctx.fillStyle = '#4a0e0e';
-    roundRect(ctx, x, y, w, h, 6);
-    ctx.fill();
-    // 分隔线
-    ctx.strokeStyle = '#d4af37';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(x, y + h / 2);
-    ctx.lineTo(x + w, y + h / 2);
-    ctx.stroke();
-
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.font = 'bold 16px monospace';
-    ctx.fillStyle = '#7cfc00';
-    ctx.fillText('CREDIT', x + 10, y + 13);
-    ctx.fillText('BET', x + 10, y + 39);
-    ctx.textAlign = 'right';
-    ctx.fillStyle = '#ff69b4';
-    ctx.fillText(String(game.credit), x + w - 10, y + 13);
-    ctx.fillText(String(game.bet), x + w - 10, y + 39);
-  }
-
-  function roundRect(ctx, x, y, w, h, r) {
+  function rr(ctx, x, y, w, h, r) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
     ctx.arcTo(x + w, y, x + w, y + h, r);
@@ -144,234 +79,370 @@
     ctx.closePath();
   }
 
-  /* 玩家手牌（底部14张） */
-  function drawPlayerHand(ctx, game) {
-    var hand = game.playerHand;
-    var tw = 32, th = 44;
-    var totalW = hand.length * (tw + 2);
-    var startX = (W - totalW) / 2;
-    var y = H - th - 6;
-    UI.tileRects = [];
-
-    for (var i = 0; i < hand.length; i++) {
-      var x = startX + i * (tw + 2);
-      var isDraw = (i === hand.length - 1 && game.lastDraw >= 0 && game.state === ST.DRAW);
-      var dy = 0;
-      if (i === UI.selected) dy = -8;
-      if (isDraw) x += 6; // 摸牌空开
-      var opts = {};
-      if (i === UI.selected) opts.highlight = true;
-      // 原版风格：白牌红底边
-      drawTileOrig(ctx, hand[i], x, y + dy, tw, th, opts);
-      UI.tileRects.push({ x: x, y: y + dy, w: tw, h: th, idx: i });
-    }
-
-    // 副露区（右侧）
-    var melds = game.playerMelds;
-    if (melds.length > 0) {
-      var mx = W - 10;
-      for (var m = melds.length - 1; m >= 0; m--) {
-        var tiles = melds[m].tiles;
-        for (var k = tiles.length - 1; k >= 0; k--) {
-          mx -= (tw * 0.7 + 1);
-          drawTileOrig(ctx, tiles[k], mx, y, tw * 0.7, th * 0.7, {});
-        }
-        mx -= 4;
-      }
-    }
+  /* ========== 金色渐变大字（红描边） ========== */
+  function goldText(ctx, str, x, y, size) {
+    ctx.font = 'bold ' + size + 'px "Noto Sans TC","PMingLiU","Microsoft JhengHei",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    var grd = ctx.createLinearGradient(0, y - size * 0.55, 0, y + size * 0.55);
+    grd.addColorStop(0, '#ff3d00');
+    grd.addColorStop(0.35, '#ffb300');
+    grd.addColorStop(0.55, '#fffde7');
+    grd.addColorStop(0.75, '#ffc107');
+    grd.addColorStop(1, '#ff6f00');
+    ctx.lineWidth = Math.max(2, size * 0.07);
+    ctx.strokeStyle = '#a00000';
+    ctx.lineJoin = 'round';
+    ctx.strokeText(str, x, y);
+    ctx.fillStyle = grd;
+    ctx.fillText(str, x, y);
   }
 
-  /* 原版风格牌：白底、红底边 */
-  function drawTileOrig(ctx, t, x, y, w, h, opts) {
-    // 厚度（红色底边）
-    ctx.fillStyle = '#c0392b';
-    roundRect(ctx, x + 1, y + 3, w, h, 3);
+  /* ========== 原版牌：白底 + 红底边 ========== */
+  function drawTile(ctx, t, x, y, w, h, opts) {
+    opts = opts || {};
+    x = Math.round(x); y = Math.round(y);
+    // 红底边（厚度）
+    var edgeH = Math.max(3, Math.round(h * 0.12));
+    ctx.fillStyle = '#d32f2f';
+    rr(ctx, x + 1, y + 2, w, h, 2);
     ctx.fill();
-    // 白底
+    // 白牌面
     var grd = ctx.createLinearGradient(0, y, 0, y + h);
     grd.addColorStop(0, '#ffffff');
-    grd.addColorStop(1, '#e8e8e8');
+    grd.addColorStop(0.85, '#f0f0f0');
+    grd.addColorStop(1, '#e0e0e0');
     ctx.fillStyle = grd;
-    roundRect(ctx, x, y, w, h, 3);
+    rr(ctx, x, y, w, h - edgeH + 2, 2);
     ctx.fill();
-    ctx.strokeStyle = '#999';
+    // 红底条
+    ctx.fillStyle = '#e53935';
+    ctx.fillRect(x + 1, y + h - edgeH, w - 1, edgeH - 1);
+    ctx.fillStyle = '#b71c1c';
+    ctx.fillRect(x + 1, y + h - 2, w - 1, 1);
+    // 黑描边
+    ctx.strokeStyle = '#333';
     ctx.lineWidth = 1;
+    rr(ctx, x + 0.5, y + 0.5, w - 1, h - 1, 2);
     ctx.stroke();
 
-    // 牌面内容（用Tiles绘制，缩放适配）
-    ctx.save();
-    ctx.beginPath();
-    roundRect(ctx, x, y, w, h, 3);
-    ctx.clip();
-    var s = Math.min(w / Tiles.W, h / Tiles.H);
-    var dw = Tiles.W * s, dh = Tiles.H * s;
-    var dx = x + (w - dw) / 2, dy = y + (h - dh) / 2;
-    ctx.translate(dx, dy);
-    ctx.scale(s, s);
-    // 直接调用内部绘制（简化：用draw再clip）
-    ctx.restore();
-
-    // 简化：直接用Tiles.draw绘制到临时位置再整体缩放
-    // 为性能，这里直接绘制
-    drawTileFace(ctx, t, x, y, w, h);
+    // 牌面
+    drawFace(ctx, t, x, y, w, h - edgeH);
 
     if (opts.highlight) {
       ctx.strokeStyle = '#ffd700';
       ctx.lineWidth = 2;
-      roundRect(ctx, x - 1, y - 1, w + 2, h + 2, 4);
+      rr(ctx, x - 1, y - 1, w + 2, h + 2, 3);
       ctx.stroke();
     }
   }
 
-  /* 牌面内容绘制 */
-  function drawTileFace(ctx, t, x, y, w, h) {
+  /* ========== 牌背：亮红 + 白高光条 ========== */
+  function drawBack(ctx, x, y, w, h) {
+    x = Math.round(x); y = Math.round(y);
+    ctx.fillStyle = '#b71c1c';
+    rr(ctx, x + 1, y + 2, w, h, 2);
+    ctx.fill();
+    var grd = ctx.createLinearGradient(x, 0, x + w, 0);
+    grd.addColorStop(0, '#ff8a80');
+    grd.addColorStop(0.25, '#f44336');
+    grd.addColorStop(1, '#c62828');
+    ctx.fillStyle = grd;
+    rr(ctx, x, y, w, h - 3, 2);
+    ctx.fill();
+    // 白底边
+    ctx.fillStyle = '#ececec';
+    ctx.fillRect(x + 1, y + h - 4, w - 2, 3);
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 1;
+    rr(ctx, x + 0.5, y + 0.5, w - 1, h - 1, 2);
+    ctx.stroke();
+  }
+
+  /* ========== 牌面点数 ========== */
+  function drawFace(ctx, t, x, y, w, h) {
     var cx = x + w / 2, cy = y + h / 2;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    var fs = Math.min(w * 0.5, h * 0.32);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x + 2, y + 2, w - 4, h - 4);
+    ctx.clip();
 
     if (t < 9) {
-      // 萬
-      var nums = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
-      ctx.fillStyle = '#222';
-      ctx.font = 'bold ' + fs + 'px sans-serif';
-      ctx.fillText(nums[t + 1], cx, cy - h * 0.18);
-      ctx.font = 'bold ' + fs * 1.1 + 'px sans-serif';
-      ctx.fillText('萬', cx, cy + h * 0.18);
+      var N = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+      var fs = h * 0.36;
+      ctx.fillStyle = '#1a1a1a';
+      ctx.font = 'bold ' + fs + 'px "Noto Sans TC",sans-serif';
+      ctx.fillText(N[t + 1], cx, y + h * 0.28);
+      ctx.font = 'bold ' + fs * 1.05 + 'px "Noto Sans TC",sans-serif';
+      ctx.fillText('萬', cx, y + h * 0.68);
     } else if (t < 18) {
-      // 筒：简化圆点
       drawPips(ctx, cx, cy, w, h, t - 9 + 1, 'pin');
     } else if (t < 27) {
       drawPips(ctx, cx, cy, w, h, t - 18 + 1, 'sou');
     } else {
-      var honors = { 27: '東', 28: '南', 29: '西', 30: '北', 31: '', 32: '發', 33: '中' };
-      var colors = { 27: '#222', 28: '#222', 29: '#222', 30: '#222', 32: '#0a0', 33: '#c00' };
+      var H_TXT = { 27: '東', 28: '南', 29: '西', 30: '北', 32: '發', 33: '中' };
+      var H_COL = { 27: '#1a1a1a', 28: '#1a1a1a', 29: '#1a1a1a', 30: '#1a1a1a', 32: '#2e7d32', 33: '#c62828' };
       if (t === 31) {
-        ctx.strokeStyle = '#2471a3';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(cx - w * 0.2, cy - h * 0.25, w * 0.4, h * 0.5);
+        ctx.strokeStyle = '#1565c0';
+        ctx.lineWidth = Math.max(2, w * 0.07);
+        ctx.strokeRect(cx - w * 0.22, y + h * 0.2, w * 0.44, h * 0.6);
       } else {
-        ctx.fillStyle = colors[t];
-        ctx.font = 'bold ' + fs * 1.3 + 'px sans-serif';
-        ctx.fillText(honors[t], cx, cy);
+        ctx.fillStyle = H_COL[t];
+        ctx.font = 'bold ' + h * 0.52 + 'px "Noto Sans TC",sans-serif';
+        ctx.fillText(H_TXT[t], cx, cy);
       }
     }
+    ctx.restore();
   }
 
+  var PIP_POS = {
+    1: [[0, 0]], 2: [[0, -0.5], [0, 0.5]],
+    3: [[0, -0.68], [0, 0], [0, 0.68]],
+    4: [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]],
+    5: [[-0.5, -0.55], [0.5, -0.55], [0, 0], [-0.5, 0.55], [0.5, 0.55]],
+    6: [[-0.5, -0.62], [0.5, -0.62], [-0.5, 0], [0.5, 0], [-0.5, 0.62], [0.5, 0.62]],
+    7: [[-0.5, -0.65], [0.5, -0.65], [0, -0.25], [-0.5, 0.2], [0.5, 0.2], [-0.45, 0.65], [0.45, 0.65]],
+    8: [[-0.5, -0.68], [0.5, -0.68], [-0.5, -0.23], [0.5, -0.23], [-0.5, 0.23], [0.5, 0.23], [-0.5, 0.68], [0.5, 0.68]],
+    9: [[-0.5, -0.68], [0, -0.68], [0.5, -0.68], [-0.5, 0], [0, 0], [0.5, 0], [-0.5, 0.68], [0, 0.68], [0.5, 0.68]]
+  };
+
   function drawPips(ctx, cx, cy, w, h, rank, kind) {
-    var colors = kind === 'pin' ? ['#2471a3', '#c0392b', '#1e8449'] : ['#1e8449'];
-    var R = Math.min(w, h) * 0.11;
-    var positions = getPipPositions(rank);
-    for (var i = 0; i < positions.length; i++) {
-      var px = cx + positions[i][0] * w * 0.3;
-      var py = cy + positions[i][1] * h * 0.3;
-      var col = colors[i % colors.length];
+    var pos = PIP_POS[rank];
+    var R = Math.min(w, h) * 0.13;
+    for (var i = 0; i < pos.length; i++) {
+      var px = cx + pos[i][0] * w * 0.62;
+      var py = cy + pos[i][1] * h * 0.62;
+      var col;
       if (kind === 'pin') {
+        col = '#1565c0';
+        if (rank === 5 && i === 2) col = '#c62828';
+        if (rank === 1) col = ['#1565c0', '#c62828', '#2e7d32'][i % 3];
         // 同心圆
         ctx.fillStyle = col;
         ctx.beginPath(); ctx.arc(px, py, R, 0, 7); ctx.fill();
         ctx.fillStyle = '#fff';
-        ctx.beginPath(); ctx.arc(px, py, R * 0.6, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.arc(px, py, R * 0.62, 0, 7); ctx.fill();
         ctx.fillStyle = col;
-        ctx.beginPath(); ctx.arc(px, py, R * 0.35, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.arc(px, py, R * 0.36, 0, 7); ctx.fill();
       } else {
-        // 竹节
-        ctx.fillStyle = col;
-        ctx.fillRect(px - 2, py - R, 4, R * 2);
+        col = '#2e7d32';
+        if (rank === 5 && i === 2) col = '#c62828';
+        if (rank === 1) {
+          // 一索画鸟简化：红绿蓝竖条
+          var cols1 = ['#c62828', '#1565c0', '#2e7d32'];
+          ctx.fillStyle = cols1[i % 3];
+        } else ctx.fillStyle = col;
+        var bw = Math.max(2, R * 0.55);
+        rr(ctx, px - bw / 2, py - R * 1.1, bw, R * 2.2, 1);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.fillRect(px - bw / 2, py - 1, bw, 2);
       }
     }
   }
 
-  function getPipPositions(rank) {
-    switch (rank) {
-      case 1: return [[0, 0]];
-      case 2: return [[0, -0.5], [0, 0.5]];
-      case 3: return [[0, -0.7], [0, 0], [0, 0.7]];
-      case 4: return [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]];
-      case 5: return [[-0.5, -0.5], [0.5, -0.5], [0, 0], [-0.5, 0.5], [0.5, 0.5]];
-      case 6: return [[-0.5, -0.6], [0.5, -0.6], [-0.5, 0], [0.5, 0], [-0.5, 0.6], [0.5, 0.6]];
-      case 7: return [[-0.5, -0.6], [0.5, -0.6], [0, -0.2], [-0.5, 0.3], [0.5, 0.3], [-0.5, 0.7], [0.5, 0.7]];
-      case 8: return [[-0.5, -0.7], [0.5, -0.7], [-0.5, -0.25], [0.5, -0.25], [-0.5, 0.25], [0.5, 0.25], [-0.5, 0.7], [0.5, 0.7]];
-      case 9: return [[-0.5, -0.7], [0, -0.7], [0.5, -0.7], [-0.5, 0], [0, 0], [0.5, 0], [-0.5, 0.7], [0, 0.7], [0.5, 0.7]];
-    }
-    return [];
+  /* ========== CREDIT/BET 框（深红底+金色角饰） ========== */
+  function drawCreditBox(ctx, game) {
+    var x = 168, y = 143, w = 168, h = 54;
+    // 深红底
+    ctx.fillStyle = '#3d0a0a';
+    rr(ctx, x, y, w, h, 4);
+    ctx.fill();
+    // 金色边框
+    ctx.strokeStyle = '#d4af37';
+    ctx.lineWidth = 2;
+    rr(ctx, x + 1, y + 1, w - 2, h - 2, 3);
+    ctx.stroke();
+    // 四角金饰（「」形）
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 3;
+    var c = 8;
+    // 左上
+    ctx.beginPath(); ctx.moveTo(x - 2, y + c); ctx.lineTo(x - 2, y - 2); ctx.lineTo(x + c, y - 2); ctx.stroke();
+    // 右上
+    ctx.beginPath(); ctx.moveTo(x + w - c, y - 2); ctx.lineTo(x + w + 2, y - 2); ctx.lineTo(x + w + 2, y + c); ctx.stroke();
+    // 左下
+    ctx.beginPath(); ctx.moveTo(x - 2, y + h - c); ctx.lineTo(x - 2, y + h + 2); ctx.lineTo(x + c, y + h + 2); ctx.stroke();
+    // 右下
+    ctx.beginPath(); ctx.moveTo(x + w - c, y + h + 2); ctx.lineTo(x + w + 2, y + h + 2); ctx.lineTo(x + w + 2, y + h - c); ctx.stroke();
+    // 中分隔线
+    ctx.strokeStyle = '#d4af37';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x + 4, y + h / 2); ctx.lineTo(x + w - 4, y + h / 2); ctx.stroke();
+
+    ctx.textBaseline = 'middle';
+    ctx.font = 'bold 15px "Courier New",monospace';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#7cfc00';
+    ctx.fillText('CREDIT', x + 10, y + 14);
+    ctx.fillText('B E T', x + 10, y + 40);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#ff6ec7';
+    ctx.font = 'bold 17px "Courier New",monospace';
+    ctx.fillText(String(game.credit), x + w - 12, y + 14);
+    ctx.fillText(String(game.bet), x + w - 12, y + 40);
   }
 
-  /* CPU牌（左侧：1明+4暗） */
+  /* ========== 顶部大标题 ========== */
+  function drawTitle(ctx, game) {
+    var txt = UI.announce;
+    if (!txt) {
+      // 待机标题
+      if (game.state === ST.IDLE || game.state === ST.BET || game.state === ST.GAMEOVER) {
+        goldText(ctx, '超級大滿貫II', 256, 42, 40);
+      }
+      return;
+    }
+    goldText(ctx, txt, 256, 48, 54);
+    if (UI.announceSub) goldText(ctx, UI.announceSub, 256, 92, 26);
+  }
+
+  /* ========== 结算行：役滿 / 合計 13 / 750點 ========== */
+  function drawScoreLine(ctx, game) {
+    var info = game.lastWin;
+    if (game.state !== ST.WIN || !info || !info.points) return;
+    var y = 128;
+    if (info.yakuman) goldText(ctx, '役滿', 192, y, 30);
+    // 合計
+    ctx.font = 'bold 19px "Noto Sans TC",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#4dd0e1';
+    ctx.fillText('合計', 278, y);
+    // 数字13
+    ctx.font = 'bold 30px "Courier New",monospace';
+    var grd = ctx.createLinearGradient(0, y - 16, 0, y + 16);
+    grd.addColorStop(0, '#ff9800'); grd.addColorStop(1, '#ff3d00');
+    ctx.lineWidth = 2; ctx.strokeStyle = '#7b0000';
+    ctx.strokeText(String(info.han), 340, y);
+    ctx.fillStyle = grd;
+    ctx.fillText(String(info.han), 340, y);
+    // 750點
+    var py = 168;
+    ctx.font = 'bold 34px "Courier New",monospace';
+    var grd2 = ctx.createLinearGradient(0, py - 18, 0, py + 18);
+    grd2.addColorStop(0, '#ffca28'); grd2.addColorStop(0.5, '#fff176'); grd2.addColorStop(1, '#ff8f00');
+    ctx.lineWidth = 2.5; ctx.strokeStyle = '#a00000';
+    ctx.textAlign = 'right';
+    ctx.strokeText(String(info.points), 420, py);
+    ctx.fillStyle = grd2;
+    ctx.fillText(String(info.points), 420, py);
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 22px "Noto Sans TC",sans-serif';
+    ctx.fillStyle = '#29b6f6';
+    ctx.fillText('點', 428, py);
+  }
+
+  /* ========== 白色滑杆 ========== */
+  function drawSlider(ctx) {
+    var x = 336, y = 204, w = 92, h = 7;
+    var grd = ctx.createLinearGradient(0, y, 0, y + h);
+    grd.addColorStop(0, '#ffffff'); grd.addColorStop(1, '#bdbdbd');
+    ctx.fillStyle = grd;
+    rr(ctx, x, y, w, h, 3);
+    ctx.fill();
+    ctx.strokeStyle = '#666';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    // 指示点（红绿）
+    var ix = x + w / 2;
+    ctx.fillStyle = '#c62828';
+    ctx.beginPath(); ctx.arc(ix - 3, y + h / 2, 4, 0, 7); ctx.fill();
+    ctx.fillStyle = '#2e7d32';
+    ctx.beginPath(); ctx.arc(ix + 3, y + h / 2, 4, 0, 7); ctx.fill();
+  }
+
+  /* ========== CPU牌（左侧：1明+4暗） ========== */
   function drawCpuTiles(ctx, game) {
-    var tw = 28, th = 38;
-    var x = 8, y = 120;
-    // 最后一张舍牌明示（原版风格）
+    var y = 118;
+    var tw = 30, th = 42;
+    var x = 8;
+    // 最后一张舍牌明示
     if (game.cpuDiscards.length > 0) {
-      var last = game.cpuDiscards[game.cpuDiscards.length - 1];
-      drawTileOrig(ctx, last, x, y, tw, th, {});
-      x += tw + 3;
+      drawTile(ctx, game.cpuDiscards[game.cpuDiscards.length - 1], x, y, tw, th, {});
+      x += tw + 4;
     }
     // 4张牌背
+    var bw = 30;
     for (var i = 0; i < 4; i++) {
-      drawTileBack(ctx, x + i * (tw * 0.6), y, tw * 0.6, th);
+      drawBack(ctx, x + i * (bw + 2), y, bw, th);
     }
-    // CPU副露
-    var my = 60;
+    // CPU副露（下方小牌）
+    var my = y + th + 6;
     for (var m = 0; m < game.cpuMelds.length; m++) {
       var tiles = game.cpuMelds[m].tiles;
+      var mx = 8;
       for (var k = 0; k < Math.min(3, tiles.length); k++) {
-        drawTileOrig(ctx, tiles[k], x + k * (tw * 0.5), my, tw * 0.5, th * 0.6, {});
+        drawTile(ctx, tiles[k], mx, my, 20, 28, {});
+        mx += 22;
       }
-      my += th * 0.6 + 2;
+      my += 30;
     }
   }
 
-  function drawTileBack(ctx, x, y, w, h) {
-    ctx.fillStyle = '#c0392b';
-    roundRect(ctx, x + 1, y + 3, w, h, 3);
-    ctx.fill();
-    var grd = ctx.createLinearGradient(0, y, 0, y + h);
-    grd.addColorStop(0, '#e74c3c');
-    grd.addColorStop(1, '#a93226');
-    ctx.fillStyle = grd;
-    roundRect(ctx, x, y, w, h, 3);
-    ctx.fill();
-  }
-
-  /* 舍牌区 */
+  /* ========== 玩家舍牌（中右） ========== */
   function drawDiscards(ctx, game) {
-    // 玩家舍牌（中部偏右）
     var tw = 20, th = 28;
-    var x = 350, y = 130;
-    var discards = game.playerDiscards.slice(-12);
-    for (var i = 0; i < discards.length; i++) {
-      var dx = x + (i % 6) * (tw + 1);
-      var dy = y + ((i / 6) | 0) * (th + 1);
-      drawTileOrig(ctx, discards[i], dx, dy, tw, th, {});
+    var x = 352, y = 118;
+    var list = game.playerDiscards.slice(-12);
+    for (var i = 0; i < list.length; i++) {
+      drawTile(ctx, list[i], x + (i % 6) * (tw + 1), y + ((i / 6) | 0) * (th + 1), tw, th, {});
     }
   }
 
-  /* 操作按钮 */
-  function drawButtons(ctx, game) {
-    var buttons = [];
-    var bx = 360, by = 60, bw = 64, bh = 26;
+  /* ========== 玩家手牌（底部14张） ========== */
+  function drawPlayerHand(ctx, game) {
+    var hand = game.playerHand;
+    var tw = 33, th = 42;
+    var gap = 1;
+    var totalW = hand.length * (tw + gap);
+    var startX = Math.round((W - totalW) / 2);
+    var y = H - th - 4;
+    UI.tileRects = [];
+    for (var i = 0; i < hand.length; i++) {
+      var x = startX + i * (tw + gap);
+      var dy = (i === UI.selected) ? -8 : 0;
+      var isDraw = (i === hand.length - 1 && game.lastDraw >= 0 && game.state === ST.DRAW);
+      if (isDraw) x += 5;
+      drawTile(ctx, hand[i], x, y + dy, tw, th, { highlight: i === UI.selected });
+      UI.tileRects.push({ x: x, y: y + dy, w: tw, h: th, idx: i });
+    }
+    // 副露（右上小牌）
+    var melds = game.playerMelds;
+    var mx = W - 14;
+    for (var m = melds.length - 1; m >= 0; m--) {
+      var tiles = melds[m].tiles;
+      for (var k = tiles.length - 1; k >= 0; k--) {
+        mx -= 22;
+        drawTile(ctx, tiles[k], mx, 60, 20, 28, {});
+      }
+      mx -= 5;
+    }
+  }
 
+  /* ========== 按钮 ========== */
+  function drawButtons(ctx, game) {
+    UI.buttons = [];
+    var bx = 438, by = 56, bw = 66, bh = 24;
     function btn(label, enabled, action) {
-      var b = { x: bx, y: by, w: bw, h: bh, label: label, enabled: enabled, action: action };
-      buttons.push(b);
-      ctx.fillStyle = enabled ? '#d4af37' : '#555';
-      roundRect(ctx, bx, by, bw, bh, 4);
+      if (by + bh > 232) return;
+      UI.buttons.push({ x: bx, y: by, w: bw, h: bh, label: label, enabled: enabled, action: action });
+      ctx.fillStyle = enabled ? '#ffd54f' : '#616161';
+      rr(ctx, bx, by, bw, bh, 4);
       ctx.fill();
-      ctx.fillStyle = enabled ? '#000' : '#999';
-      ctx.font = 'bold 14px sans-serif';
+      ctx.strokeStyle = enabled ? '#a00000' : '#424242';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.fillStyle = enabled ? '#4a0000' : '#9e9e9e';
+      ctx.font = 'bold 14px "Noto Sans TC",sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(label, bx + bw / 2, by + bh / 2);
-      by += bh + 4;
-      return b;
+      ctx.fillText(label, bx + bw / 2, by + bh / 2 + 1);
+      by += bh + 5;
     }
-
-    UI.buttons = buttons;
-
-    if (game.state === ST.IDLE || game.state === ST.GAMEOVER) {
-      btn('投幣', true, 'coin');
-    }
+    if (game.state === ST.IDLE || game.state === ST.GAMEOVER) btn('投幣', true, 'coin');
     if (game.state === ST.IDLE || game.state === ST.BET) {
       btn('押注', game.credit > 0, 'bet');
       btn('開始', game.bet > 0, 'start');
@@ -385,13 +456,11 @@
       if (o.hu) btn('胡', true, 'ron');
       if (o.kan) btn('槓', true, 'kan');
       if (o.pon) btn('碰', true, 'pon');
-      if (o.chi && o.chi.length > 0) btn('吃', true, 'chi');
+      if (o.chi && o.chi.length) btn('吃', true, 'chi');
       btn('過', true, 'pass');
     }
-    if (game.state === ST.WIN && game.lastWin && game.lastWin.winner === 'player') {
-      btn('比倍', true, 'double');
-      btn('下一局', true, 'next');
-    } else if (game.state === ST.WIN) {
+    if (game.state === ST.WIN) {
+      if (game.lastWin && game.lastWin.winner === 'player' && game.lastWin.points > 0) btn('比倍', true, 'double');
       btn('下一局', true, 'next');
     }
     if (game.state === ST.DOUBLE) {
@@ -400,77 +469,67 @@
     }
   }
 
-  /* 结算显示 */
-  function drawWinInfo(ctx, game) {
-    if (game.state !== ST.WIN || !game.lastWin || !game.lastWin.points) return;
-    var info = game.lastWin;
-    var y = 100;
-    if (info.yakuman) {
-      goldText(ctx, '役滿', 250, y, 28);
-    }
-    ctx.font = 'bold 18px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#87ceeb';
-    ctx.fillText('合計 ' + info.han, 300, y + 5);
-    goldText(ctx, info.points + '點', 400, y + 5, 24);
-  }
-
-  /* 比倍界面 */
+  /* ========== 比倍 ========== */
   function drawDouble(ctx, game) {
     if (game.state !== ST.DOUBLE) return;
-    goldText(ctx, '比倍', 256, 40, 36);
-    // 庄家牌
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 20px sans-serif';
+    // 遮罩
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(0, 0, W, H);
+    goldText(ctx, '比倍', 256, 50, 44);
+    ctx.font = 'bold 22px "Courier New",monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('莊家: ' + cardName(game.doubleCards[0]), 180, 100);
-    ctx.fillText('?', 330, 100);
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#fff';
+    ctx.fillText('莊家', 170, 110);
+    ctx.fillText('你', 342, 110);
+    // 庄家牌
+    drawMiniCard(ctx, game.doubleCards[0], 170, 140);
+    // 玩家牌（未开显示？）
+    if (game.doubleResult) drawMiniCard(ctx, game.doubleResult.player, 342, 140);
+    else { ctx.fillStyle = '#ffd54f'; ctx.font = 'bold 40px sans-serif'; ctx.fillText('?', 342, 150); }
     if (game.doubleResult) {
-      ctx.fillText('你: ' + cardName(game.doubleResult.player), 330, 130);
-      goldText(ctx, game.doubleResult.win ? '贏!' : '輸', 256, 160, 28);
+      goldText(ctx, game.doubleResult.win ? '贏!' : '輸', 256, 200, 34);
     }
   }
 
-  function cardName(v) {
-    return v === 1 ? 'A' : v === 11 ? 'J' : v === 12 ? 'Q' : v === 13 ? 'K' : String(v);
+  function drawMiniCard(ctx, v, x, y) {
+    var w = 34, h = 48;
+    ctx.fillStyle = '#fff';
+    rr(ctx, x - w / 2, y - h / 2, w, h, 4);
+    ctx.fill();
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5; ctx.stroke();
+    var txt = v === 1 ? 'A' : v === 11 ? 'J' : v === 12 ? 'Q' : v === 13 ? 'K' : String(v);
+    ctx.fillStyle = (v === 1 || v === 11) ? '#c62828' : '#1a1a1a';
+    ctx.font = 'bold 24px "Courier New",monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(txt, x, y);
   }
 
   function render() {
     var ctx = UI.ctx, game = UI.game;
-    if (!ctx) return;
+    if (!ctx || !game) return;
     ctx.save();
     ctx.scale(UI.scale, UI.scale);
-
     drawBG(ctx);
-
-    // 顶部公告
-    if (UI.announce) {
-      goldText(ctx, UI.announce, 256, 45, 52);
-      if (UI.announceSub) goldText(ctx, UI.announceSub, 256, 90, 28);
-    } else {
-      // 标题
-      ctx.font = 'bold 16px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#d4af37';
-      ctx.fillText('超級大滿貫II', 256, 20);
+    drawTitle(ctx, game);
+    // 游戏中也显示CPU牌和玩家牌
+    if (game.state !== ST.IDLE || game.playerHand.length > 0) {
+      drawCpuTiles(ctx, game);
+      drawDiscards(ctx, game);
+      drawPlayerHand(ctx, game);
     }
-
     drawCreditBox(ctx, game);
-    drawWinInfo(ctx, game);
-    drawCpuTiles(ctx, game);
-    drawDiscards(ctx, game);
-    drawPlayerHand(ctx, game);
+    drawScoreLine(ctx, game);
+    drawSlider(ctx);
     drawButtons(ctx, game);
     drawDouble(ctx, game);
-
-    // 提示信息
-    if (game.message) {
-      ctx.font = '14px sans-serif';
+    // 提示
+    if (game.message && game.state !== ST.WIN) {
+      ctx.font = '13px "Noto Sans TC",sans-serif';
       ctx.textAlign = 'center';
       ctx.fillStyle = '#fff';
-      ctx.fillText(game.message, 256, H - 58);
+      ctx.fillText(game.message, 256, 108);
     }
-
     ctx.restore();
   }
 
@@ -479,39 +538,27 @@
     var x = (e.clientX - rect.left) / UI.scale;
     var y = (e.clientY - rect.top) / UI.scale;
     var game = UI.game;
-
-    // 按钮
-    if (UI.buttons) {
-      for (var i = 0; i < UI.buttons.length; i++) {
-        var b = UI.buttons[i];
-        if (b.enabled && x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) {
-          doAction(b.action);
-          return;
-        }
+    for (var i = 0; i < UI.buttons.length; i++) {
+      var b = UI.buttons[i];
+      if (b.enabled && x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) {
+        doAction(b.action); return;
       }
     }
-
-    // 选牌
     if (game.state === ST.DRAW || game.state === ST.DISCARD) {
-      for (var i = 0; i < UI.tileRects.length; i++) {
-        var r = UI.tileRects[i];
+      for (var j = 0; j < UI.tileRects.length; j++) {
+        var r = UI.tileRects[j];
         if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) {
-          if (UI.selected === r.idx) {
-            game.discard(r.idx);
-            UI.selected = -1;
-          } else {
-            UI.selected = r.idx;
-            render();
-          }
+          if (UI.selected === r.idx) { game.discard(r.idx); UI.selected = -1; }
+          else { UI.selected = r.idx; render(); }
           return;
         }
       }
     }
   }
 
-  function doAction(action) {
+  function doAction(a) {
     var game = UI.game;
-    switch (action) {
+    switch (a) {
       case 'coin': game.insertCoin(1); break;
       case 'bet': game.addBet(); break;
       case 'start': game.start(); break;
@@ -521,26 +568,21 @@
       case 'kan': game.playerKan(); break;
       case 'selfkan': game.playerSelfKan(); break;
       case 'chi':
-        // 简化：选第一个吃选项
-        if (game.callOptions && game.callOptions.chi.length > 0)
-          game.playerChi(game.callOptions.chi[0]);
+        if (game.callOptions && game.callOptions.chi.length) game.playerChi(game.callOptions.chi[0]);
         break;
       case 'pass': game.playerPass(); break;
       case 'double': game.startDouble(); break;
       case 'big': game.doubleBet(true); break;
       case 'small': game.doubleBet(false); break;
-      case 'next': game.nextRound(); break;
+      case 'next': game.nextRound(); UI.announce = ''; UI.announceSub = ''; break;
     }
     UI.selected = -1;
   }
 
   function onKey(e) {
     var game = UI.game;
-    // 5=投幣 1=開始 U=押注
     if (e.key === '5') game.insertCoin(1);
-    else if (e.key === '1') {
-      if (game.state === ST.BET) game.start();
-    }
+    else if (e.key === '1' && game.state === ST.BET) game.start();
     else if (e.key === 'u' || e.key === 'U') game.addBet();
     else if ((e.key === 'y' || e.key === 'Y') && game.selfWin) game.playerWin(true);
   }
