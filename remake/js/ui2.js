@@ -246,7 +246,7 @@
 
   /* ========== CREDIT/BET 框（深红底+金色角饰） ========== */
   function drawCreditBox(ctx, game) {
-    var x = 168, y = 143, w = 168, h = 54;
+    var x = 140, y = 108, w = 132, h = 44;
     // 深红底
     ctx.fillStyle = '#3d0a0a';
     rr(ctx, x, y, w, h, 4);
@@ -274,16 +274,32 @@
     ctx.beginPath(); ctx.moveTo(x + 4, y + h / 2); ctx.lineTo(x + w - 4, y + h / 2); ctx.stroke();
 
     ctx.textBaseline = 'middle';
-    ctx.font = 'bold 15px "Courier New",monospace';
+    ctx.font = 'bold 13px "Courier New",monospace';
     ctx.textAlign = 'left';
     ctx.fillStyle = '#7cfc00';
-    ctx.fillText('CREDIT', x + 10, y + 14);
-    ctx.fillText('B E T', x + 10, y + 40);
+    ctx.fillText('CREDIT', x + 8, y + 12);
+    ctx.fillText('B E T', x + 8, y + 32);
     ctx.textAlign = 'right';
     ctx.fillStyle = '#ff6ec7';
-    ctx.font = 'bold 17px "Courier New",monospace';
-    ctx.fillText(String(game.credit), x + w - 12, y + 14);
-    ctx.fillText(String(game.bet), x + w - 12, y + 40);
+    ctx.font = 'bold 15px "Courier New",monospace';
+    ctx.fillText(String(game.credit), x + w - 10, y + 12);
+    ctx.fillText(String(game.bet), x + w - 10, y + 32);
+  }
+
+  /* ========== CREDIT右侧小牌（發+牌背，对手牌） ========== */
+  function drawSideTiles(ctx, game) {
+    var x = 282, y = 108;
+    var tw = 22, th = 32;
+    // 第一张明牌（对手舍牌或指示）
+    if (game.cpuDiscards.length > 0) {
+      drawTile(ctx, game.cpuDiscards[game.cpuDiscards.length - 1], x, y, tw, th, {});
+    } else {
+      drawTile(ctx, 32, x, y, tw, th, {}); // 發
+    }
+    x += tw + 2;
+    for (var i = 0; i < 4; i++) {
+      drawBack(ctx, x + i * (tw * 0.7 + 1), y, tw * 0.7, th);
+    }
   }
 
   /* ========== 顶部大标题 ========== */
@@ -365,6 +381,73 @@
     ctx.beginPath(); ctx.arc(ix + 3, y + h / 2, 4, 0, 7); ctx.fill();
   }
 
+  /* ========== 顶部牌墙（一排红牌背） ========== */
+  function drawWall(ctx, game) {
+    var n = Math.min(13, Math.ceil(game.wall.length / 8));
+    var bw = 28, bh = 22;
+    var totalW = n * (bw + 1);
+    var x0 = Math.round((W - totalW) / 2);
+    for (var i = 0; i < n; i++) {
+      drawBack(ctx, x0 + i * (bw + 1), 2, bw, bh);
+    }
+  }
+
+  /* ========== 人物立绘（左侧，占位风格化） ========== */
+  function drawPortrait(ctx) {
+    var x = 6, y = 28, w = 118, h = 150;
+    // 背景
+    ctx.fillStyle = '#5d4037';
+    rr(ctx, x, y, w, h, 6);
+    ctx.fill();
+    // 简化人物：脸
+    ctx.fillStyle = '#ffccaa';
+    ctx.beginPath();
+    ctx.ellipse(x + w / 2, y + 52, 28, 34, 0, 0, 7);
+    ctx.fill();
+    // 头发
+    ctx.fillStyle = '#3e2723';
+    ctx.beginPath();
+    ctx.ellipse(x + w / 2, y + 38, 32, 26, 0, Math.PI, 0);
+    ctx.fill();
+    ctx.fillRect(x + w / 2 - 32, y + 30, 10, 50);
+    ctx.fillRect(x + w / 2 + 22, y + 30, 10, 50);
+    // 眼睛
+    ctx.fillStyle = '#212121';
+    ctx.beginPath(); ctx.arc(x + w / 2 - 11, y + 52, 3, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + w / 2 + 11, y + 52, 3, 0, 7); ctx.fill();
+    // 嘴
+    ctx.strokeStyle = '#b71c1c';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(x + w / 2, y + 68, 8, 0.3, Math.PI - 0.3); ctx.stroke();
+    // 身体/衣服（格纹示意）
+    ctx.fillStyle = '#eceff1';
+    rr(ctx, x + 8, y + 92, w - 16, h - 100, 4);
+    ctx.fill();
+    ctx.strokeStyle = '#78909c';
+    ctx.lineWidth = 1;
+    for (var i = 0; i < 5; i++) {
+      ctx.beginPath(); ctx.moveTo(x + 12 + i * 20, y + 94); ctx.lineTo(x + 12 + i * 20, y + h - 6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + 10, y + 98 + i * 12); ctx.lineTo(x + w - 10, y + 98 + i * 12); ctx.stroke();
+    }
+  }
+
+  /* ========== DONDEN 指示器 ========== */
+  function drawDonden(ctx, game) {
+    var x = 4, y = 182, w = 112, h = 24;
+    ctx.fillStyle = '#3d0a0a';
+    rr(ctx, x, y, w, h, 4);
+    ctx.fill();
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 2;
+    rr(ctx, x + 1, y + 1, w - 2, h - 2, 3);
+    ctx.stroke();
+    ctx.fillStyle = '#7cfc00';
+    ctx.font = 'bold 14px "Courier New",monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('DONDEN ' + (game.donden || 4), x + w / 2, y + h / 2 + 1);
+  }
+
   /* ========== CPU牌（左侧：1明+4暗） ========== */
   function drawCpuTiles(ctx, game) {
     var y = 118;
@@ -403,22 +486,30 @@
     }
   }
 
-  /* ========== 玩家手牌（底部14张） ========== */
+  /* ========== 玩家手牌（底部14张，带A-N键位标签） ========== */
   function drawPlayerHand(ctx, game) {
     var hand = game.playerHand;
-    var tw = 33, th = 42;
-    var gap = 1;
+    var tw = 31, th = 38;
+    var gap = 2;
+    var labelH = 12;
     var totalW = hand.length * (tw + gap);
-    var startX = Math.round((W - totalW) / 2);
-    var y = H - th - 4;
+    var startX = Math.round((W - totalW) / 2) + 6;
+    var y = H - th - labelH - 3;
     UI.tileRects = [];
+    var KEYS = 'ABCDEFGHIJKLMN';
     for (var i = 0; i < hand.length; i++) {
       var x = startX + i * (tw + gap);
       var dy = (i === UI.selected) ? -8 : 0;
       var isDraw = (i === hand.length - 1 && game.lastDraw >= 0 && game.state === ST.DRAW);
       if (isDraw) x += 5;
       drawTile(ctx, hand[i], x, y + dy, tw, th, { highlight: i === UI.selected });
-      UI.tileRects.push({ x: x, y: y + dy, w: tw, h: th, idx: i });
+      // A-N 标签
+      ctx.fillStyle = '#ffff00';
+      ctx.font = 'bold 10px "Courier New",monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(KEYS[i] || '', x + tw / 2, y + th + 2 + dy);
+      UI.tileRects.push({ x: x, y: y + dy, w: tw, h: th + labelH, idx: i });
     }
     // 副露（右上小牌）
     var melds = game.playerMelds;
@@ -526,16 +617,35 @@
     ctx.save();
     ctx.scale(UI.scale, UI.scale);
     drawBG(ctx);
-    drawTitle(ctx, game);
-    // 游戏中也显示CPU牌和玩家牌
-    if (game.state !== ST.IDLE || game.playerHand.length > 0) {
+
+    var isWin = (game.state === ST.WIN && game.lastWin && game.lastWin.points);
+
+    if (isWin) {
+      // 胡牌画面：大字 + 结算（沿用之前1:1还原）
+      drawTitle(ctx, game);
       drawCpuTiles(ctx, game);
       drawDiscards(ctx, game);
       drawPlayerHand(ctx, game);
+      // WIN时CREDIT框回到中央
+      drawCreditBoxWin(ctx, game);
+      drawScoreLine(ctx, game);
+      drawSlider(ctx);
+    } else {
+      // 对局画面：牌墙 + 人物 + DONDEN + A-N手牌（按实机截图）
+      drawWall(ctx, game);
+      drawPortrait(ctx);
+      drawDonden(ctx, game);
+      drawCreditBox(ctx, game);
+      drawSideTiles(ctx, game);
+      if (game.playerHand.length > 0) {
+        drawPlayerHand(ctx, game);
+      } else {
+        // 待机标题
+        goldText(ctx, '超級大滿貫II', 300, 60, 36);
+      }
+      // 舍牌区（人物右侧）
+      drawDiscardsGame(ctx, game);
     }
-    drawCreditBox(ctx, game);
-    drawScoreLine(ctx, game);
-    drawSlider(ctx);
     drawButtons(ctx, game);
     drawDouble(ctx, game);
     // 提示
@@ -543,9 +653,52 @@
       ctx.font = '13px "Noto Sans TC",sans-serif';
       ctx.textAlign = 'center';
       ctx.fillStyle = '#fff';
-      ctx.fillText(game.message, 256, 108);
+      ctx.fillText(game.message, 300, 170);
     }
     ctx.restore();
+  }
+
+  /* WIN时中央CREDIT框 */
+  function drawCreditBoxWin(ctx, game) {
+    var x = 168, y = 143, w = 168, h = 54;
+    ctx.fillStyle = '#3d0a0a';
+    rr(ctx, x, y, w, h, 4);
+    ctx.fill();
+    ctx.strokeStyle = '#d4af37';
+    ctx.lineWidth = 2;
+    rr(ctx, x + 1, y + 1, w - 2, h - 2, 3);
+    ctx.stroke();
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 3;
+    var c = 8;
+    ctx.beginPath(); ctx.moveTo(x - 2, y + c); ctx.lineTo(x - 2, y - 2); ctx.lineTo(x + c, y - 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + w - c, y - 2); ctx.lineTo(x + w + 2, y - 2); ctx.lineTo(x + w + 2, y + c); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x - 2, y + h - c); ctx.lineTo(x - 2, y + h + 2); ctx.lineTo(x + c, y + h + 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + w - c, y + h + 2); ctx.lineTo(x + w + 2, y + h + 2); ctx.lineTo(x + w + 2, y + h - c); ctx.stroke();
+    ctx.strokeStyle = '#d4af37';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x + 4, y + h / 2); ctx.lineTo(x + w - 4, y + h / 2); ctx.stroke();
+    ctx.textBaseline = 'middle';
+    ctx.font = 'bold 15px "Courier New",monospace';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#7cfc00';
+    ctx.fillText('CREDIT', x + 10, y + 14);
+    ctx.fillText('B E T', x + 10, y + 40);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#ff6ec7';
+    ctx.font = 'bold 17px "Courier New",monospace';
+    ctx.fillText(String(game.credit), x + w - 12, y + 14);
+    ctx.fillText(String(game.bet), x + w - 12, y + 40);
+  }
+
+  /* 对局舍牌区（人物右侧中央） */
+  function drawDiscardsGame(ctx, game) {
+    var tw = 20, th = 28;
+    var x = 140, y = 158;
+    var list = game.playerDiscards.slice(-8).concat(game.cpuDiscards.slice(-4));
+    for (var i = 0; i < list.length; i++) {
+      drawTile(ctx, list[i], x + (i % 8) * (tw + 1), y + ((i / 8) | 0) * (th + 1), tw, th, {});
+    }
   }
 
   function onClick(e) {
@@ -600,6 +753,15 @@
     else if (e.key === '1' && game.state === ST.BET) game.start();
     else if (e.key === 'u' || e.key === 'U') game.addBet();
     else if ((e.key === 'y' || e.key === 'Y') && game.selfWin) game.playerWin(true);
+    // A-N 选牌（原版14个牌键）
+    else if (game.state === ST.DRAW || game.state === ST.DISCARD) {
+      var k = e.key.toUpperCase();
+      var idx = 'ABCDEFGHIJKLMN'.indexOf(k);
+      if (idx >= 0 && idx < UI.tileRects.length) {
+        if (UI.selected === idx) { game.discard(idx); UI.selected = -1; }
+        else { UI.selected = idx; render(); }
+      }
+    }
   }
 
   g.SDMG2UI = { init: init, render: render, setAnnounce: function(a, sub) { UI.announce = a; UI.announceSub = sub; render(); } };
