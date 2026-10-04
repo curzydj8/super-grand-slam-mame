@@ -52,6 +52,7 @@
       else { UI.announce = '人胡'; UI.announceSub = ''; }
     } else if (info.winner === 'cpu') { UI.announce = '電腦胡'; UI.announceSub = ''; }
     else { UI.announce = '流局'; UI.announceSub = ''; }
+    render();
     setTimeout(function () { UI.announce = ''; UI.announceSub = ''; render(); }, 5000);
   }
 
