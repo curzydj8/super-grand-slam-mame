@@ -303,37 +303,47 @@
   /* ========== 结算行：役滿 / 合計 13 / 750點 ========== */
   function drawScoreLine(ctx, game) {
     var info = game.lastWin;
-    if (game.state !== ST.WIN || !info || !info.points) return;
-    var y = 128;
-    if (info.yakuman) goldText(ctx, '役滿', 192, y, 30);
-    // 合計
-    ctx.font = 'bold 19px "Noto Sans TC",sans-serif';
-    ctx.textAlign = 'center';
+    if (!info || !info.points) return;
+    var y = 122;
+    // 役滿（金色，最左）
+    if (info.yakuman) {
+      ctx.font = 'bold 26px "Noto Sans TC",sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      var grd0 = ctx.createLinearGradient(0, y - 14, 0, y + 14);
+      grd0.addColorStop(0, '#ff3d00'); grd0.addColorStop(0.5, '#ffd700'); grd0.addColorStop(1, '#ff8f00');
+      ctx.lineWidth = 2; ctx.strokeStyle = '#a00000';
+      ctx.strokeText('役滿', 150, y);
+      ctx.fillStyle = grd0;
+      ctx.fillText('役滿', 150, y);
+    }
+    // 合計（青色）
+    ctx.font = 'bold 18px "Noto Sans TC",sans-serif';
+    ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#4dd0e1';
-    ctx.fillText('合計', 278, y);
-    // 数字13
-    ctx.font = 'bold 30px "Courier New",monospace';
-    var grd = ctx.createLinearGradient(0, y - 16, 0, y + 16);
-    grd.addColorStop(0, '#ff9800'); grd.addColorStop(1, '#ff3d00');
+    ctx.fillText('合計', 225, y);
+    // 13（橙色）
+    ctx.font = 'bold 28px "Courier New",monospace';
+    var grd = ctx.createLinearGradient(0, y - 15, 0, y + 15);
+    grd.addColorStop(0, '#ffb300'); grd.addColorStop(1, '#ff3d00');
     ctx.lineWidth = 2; ctx.strokeStyle = '#7b0000';
-    ctx.strokeText(String(info.han), 340, y);
+    ctx.strokeText(String(info.han), 285, y);
     ctx.fillStyle = grd;
-    ctx.fillText(String(info.han), 340, y);
-    // 750點
-    var py = 168;
-    ctx.font = 'bold 34px "Courier New",monospace';
-    var grd2 = ctx.createLinearGradient(0, py - 18, 0, py + 18);
+    ctx.fillText(String(info.han), 285, y);
+    // 750點（右側，大字）
+    var py = 165;
+    ctx.font = 'bold 36px "Courier New",monospace';
+    var grd2 = ctx.createLinearGradient(0, py - 19, 0, py + 19);
     grd2.addColorStop(0, '#ffca28'); grd2.addColorStop(0.5, '#fff176'); grd2.addColorStop(1, '#ff8f00');
     ctx.lineWidth = 2.5; ctx.strokeStyle = '#a00000';
-    ctx.textAlign = 'right';
-    ctx.strokeText(String(info.points), 420, py);
-    ctx.fillStyle = grd2;
-    ctx.fillText(String(info.points), 420, py);
     ctx.textAlign = 'left';
+    ctx.strokeText(String(info.points), 340, py);
+    ctx.fillStyle = grd2;
+    ctx.fillText(String(info.points), 340, py);
     ctx.font = 'bold 22px "Noto Sans TC",sans-serif';
     ctx.fillStyle = '#29b6f6';
-    ctx.fillText('點', 428, py);
+    ctx.fillText('點', 340 + String(info.points).length * 22, py);
   }
 
   /* ========== 白色滑杆 ========== */
@@ -426,9 +436,9 @@
   /* ========== 按钮 ========== */
   function drawButtons(ctx, game) {
     UI.buttons = [];
-    var bx = 438, by = 56, bw = 66, bh = 24;
+    var bx = 440, by = 200, bw = 66, bh = 24;
     function btn(label, enabled, action) {
-      if (by + bh > 232) return;
+      if (by + bh > 236) return;
       UI.buttons.push({ x: bx, y: by, w: bw, h: bh, label: label, enabled: enabled, action: action });
       ctx.fillStyle = enabled ? '#ffd54f' : '#616161';
       rr(ctx, bx, by, bw, bh, 4);
@@ -441,7 +451,11 @@
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(label, bx + bw / 2, by + bh / 2 + 1);
-      by += bh + 5;
+      by += bh + 4;
+    }
+    // 游戏进行中的按钮放右侧上方
+    if (game.state === ST.DRAW || game.state === ST.CALL || game.state === ST.DISCARD) {
+      by = 56;
     }
     if (game.state === ST.IDLE || game.state === ST.GAMEOVER) btn('投幣', true, 'coin');
     if (game.state === ST.IDLE || game.state === ST.BET) {
@@ -588,5 +602,5 @@
     else if ((e.key === 'y' || e.key === 'Y') && game.selfWin) game.playerWin(true);
   }
 
-  g.SDMG2UI = { init: init, render: render };
+  g.SDMG2UI = { init: init, render: render, setAnnounce: function(a, sub) { UI.announce = a; UI.announceSub = sub; render(); } };
 })(typeof window !== 'undefined' ? window : globalThis);
