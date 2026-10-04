@@ -18,10 +18,8 @@ window.addEventListener('load', function () {
   var game = new SDMG2Game();
   game.credit = 20;
   game.bet = 10;
-  // 还原截图：大車輪 14张
-  // 1筒2筒3筒4筒5筒6筒7筒8筒 2筒3筒4筒5筒6筒7筒
   game.playerHand = [9,10,11,12,13,14,15,16,17,10,11,12,13,14];
-  game.cpuDiscards = [17]; // 9筒
+  game.cpuDiscards = [17];
   game.state = 'win';
   game.lastWin = {
     winner: 'player',
@@ -29,8 +27,7 @@ window.addEventListener('load', function () {
     han: 13, points: 750, yakuman: true, isTsumo: true
   };
   SDMG2UI.init('game', game);
-  // 触发win事件显示大字
-  game.emit('win', game.lastWin);
+  SDMG2UI.setAnnounce('大車輪', '役滿');
 });
 </script>
 </body>
