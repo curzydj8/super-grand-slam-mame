@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>超級大滿貫II · 网页重制版</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game"></canvas>
+  <div id="hint">投幣=5 · 押注=U · 開始=1 · 點選手牌切出 · 自摸胡=Y</div>
+</div>
+<script src="js/tiles.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/sdmg2.js"></script>
+<script src="js/yaku.js"></script>
+<script src="js/game2.js"></script>
+<script src="js/ui2.js"></script>
+<script>
+  window.addEventListener('load', function () {
+    var game = new SDMG2Game();
+    game.insertCoin(10); // 初始送10币试玩
+    SDMG2UI.init('game', game);
+  });
+</script>
+</body>
+</html>
+<!-- sdmg2 remake v2: 双人日式 20261004 -->
