@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>超级大满贯II - 安卓版</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a0a; color: #fff; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; padding: 20px; line-height: 1.6; }
+  .container { max-width: 600px; margin: 0 auto; }
+  h1 { color: #ffd700; text-align: center; margin: 20px 0; font-size: 24px; }
+  .card { background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 20px; margin: 15px 0; }
+  .card h2 { color: #4fc3f7; font-size: 18px; margin-bottom: 10px; }
+  .btn { display: block; background: #ffd700; color: #000; text-align: center; padding: 15px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 18px; margin: 10px 0; }
+  .btn-secondary { background: #333; color: #fff; }
+  .step { background: #222; border-left: 4px solid #ffd700; padding: 12px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+  .step-num { color: #ffd700; font-weight: bold; font-size: 18px; }
+  .warning { background: #3a2a00; border: 1px solid #ffd700; border-radius: 8px; padding: 15px; margin: 15px 0; }
+  code { background: #333; padding: 2px 6px; border-radius: 4px; font-size: 14px; }
+  .back { text-align: center; margin: 20px 0; }
+  .back a { color: #4fc3f7; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🀄 超級大滿貫II<br>安卓版</h1>
+  
+  <div class="card">
+    <h2>📱 为什么用安卓版？</h2>
+    <p>超級大滿貫II (sdmg2) 需要 MAME 0.139 核心，浏览器 WASM 目前无法运行（社区已确认）。安卓原生版完美运行！</p>
+  </div>
+
+  <div class="card" style="border:2px solid #ffd700;">
+    <h2>🚀 专属启动器 App（最新）</h2>
+    <p>为超級大滿貫II 定制的安卓启动器：一键检测 RetroArch、一键安装 29 键皮肤、一键复制 ROM、一键启动游戏！</p>
+    <a class="btn" href="apk/sdmg2-launcher-v1.0.apk" download>下载 超級大滿貫II 启动器 v1.0 (1.1MB)</a>
+    <p style="color:#888;font-size:14px;">包名: com.marsgeek.sdmg2<br>需要: Android 5.0 以上 + RetroArch<br>安装时如提示"未知来源"，请允许安装</p>
+    <div class="step"><span class="step-num">1.</span> 安装启动器 App 和 RetroArch（Play 商店）</div>
+    <div class="step"><span class="step-num">2.</span> 打开启动器，点 ② 安装 29 键皮肤，点 ③ 复制 ROM</div>
+    <div class="step"><span class="step-num">3.</span> 按 App 内说明把文件放入 RetroArch 对应目录</div>
+    <div class="step"><span class="step-num">4.</span> 点 ④ 启动 RetroArch，横屏开玩！</div>
+  </div>
+
+  <div class="card" style="border:2px solid #4da6ff;">
+    <h2>🕹️ 网页重制版 安卓 App（新·免 RetroArch）</h2>
+    <p>纯离线 WebView 套壳：网页重制版（双人日式 136 张、吃碰槓胡、比倍流程）直接打包成原生 App，打开即玩，不用装 RetroArch、不用配键。</p>
+    <a class="btn" href="apk/sdmg2-remake-v1.0.apk" download>下载 超級大滿貫II 重制版 App v1.0 (38KB)</a>
+    <p style="color:#888;font-size:14px;">包名: com.marsgeek.sdmg2remake<br>需要: Android 5.0 以上，无其他依赖<br>安装时如提示"未知来源"，请允许安装</p>
+    <div class="step"><span class="step-num">1.</span> 下载安装 APK（手机浏览器打开本页下载）</div>
+    <div class="step"><span class="step-num">2.</span> 打开 App（自动横屏全屏），投幣/押注/開始按屏幕提示点</div>
+  </div>
+
+  <div class="card">
+    <h2>🎮 方案二：RetroArch + 29键定制触控（推荐）</h2>
+    <p>专为超級大滿貫II 定制的 29 键触控布局：投幣/開始/退幣/查帳 + A-N牌鍵 + 吃/碰/槓/聽/胡/押注/比倍/大/小/海底/得分，一键即按。</p>
+    <a class="btn" href="overlays/sdmg2_overlay.cfg" download>下载触控配置 (.cfg)</a>
+    <a class="btn btn-secondary" href="overlays/sdmg2_overlay.png" download>下载触控皮肤 (.png)</a>
+    <div class="step"><span class="step-num">1.</span> 在 Google Play 安装 <strong>RetroArch</strong>（免费开源）</div>
+    <div class="step"><span class="step-num">2.</span> RetroArch 内：在线更新 → 下载核心 → 选 <strong>MAME 2010</strong> (mame2010_libretro)</div>
+    <div class="step"><span class="step-num">3.</span> 把 <code>sdmg2.zip</code>（上方下载，不解压）放入 RetroArch 的 ROM 目录</div>
+    <div class="step"><span class="step-num">4.</span> 把下载的 <code>sdmg2_overlay.cfg</code> 和 <code>sdmg2_overlay.png</code> 放入手机 <code>RetroArch/overlays/</code> 目录（两个文件放一起）</div>
+    <div class="step"><span class="step-num">5.</span> RetroArch 设置 → 屏幕显示 → 覆盖 → 覆盖预设 → 选择 <code>sdmg2_overlay.cfg</code></div>
+    <div class="step"><span class="step-num">6.</span> 载入 sdmg2.zip，横屏，29 个金色按键即点即用</div>
+  </div>
+
+  <div class="card">
+    <h2>⬇️ 方案一：MAME4droid（通用）</h2>
+    <p>MAME4droid (0.139u1) - 开源免费的 MAME 安卓移植版（默认键位需手动映射）</p>
+    <a class="btn btn-secondary" href="https://apkpure.com/mame4droid-0-139u1/com.seleuco.mame4droid/download" target="_blank">下载 MAME4droid APK (35.9MB)</a>
+    <p style="color:#888;font-size:14px;">包名: com.seleuco.mame4droid<br>需要: Android 2.3 以上</p>
+    <div class="step"><span class="step-num">1.</span> 安装 APK（允许安装未知来源应用）</div>
+    <div class="step"><span class="step-num">2.</span> 把 <code>sdmg2.zip</code> 复制到 <code>/sdcard/MAME4droid/roms/</code>（不要解压）</div>
+    <div class="step"><span class="step-num">3.</span> 在 MAME4droid 里找到 <code>sdmg2</code> 运行，进游戏后按 TAB 可重映射键位</div>
+  </div>
+
+  <div class="card">
+    <h2>🀄 第二步：下载游戏 ROM</h2>
+    <p>超級大滿貫II (sdmg2.zip) - 已验证 CRC</p>
+    <a class="btn btn-secondary" href="roms/sdmg2.zip" download>下载 sdmg2.zip (1.05MB)</a>
+  </div>
+
+  <div class="warning">
+    ⚠️ <strong>注意</strong><br>
+    模拟器不含游戏 ROM。<br>
+    sdmg2.zip 需自行确认拥有合法使用权。</div>
+
+  <div class="back"><a href="index.html">← 返回网页版</a></div>
+</div>
+</body>
+</html>
