@@ -735,5 +735,127 @@
     }
   }
 
-  g.SDMG2UI = { init: init, render: render, setAnnounce: function (a, sub) { UI.announce = a; UI.announceSub = sub; render(); } };
+  /* ================= HTML 触屏按钮 ================= */
+  /* 与 canvas drawButtons 相同的 state 判断逻辑，按钮更大、手机可点 */
+  var HTML_BTNS = [
+    { id: 'hb-coin', label: '投幣', action: 'coin' },
+    { id: 'hb-bet', label: '押注', action: 'bet' },
+    { id: 'hb-start', label: '開始', action: 'start' },
+    { id: 'hb-confirm', label: '確定', action: 'confirm' },
+    { id: 'hb-tsumo', label: '胡', action: 'tsumo' },
+    { id: 'hb-selfkan', label: '槓', action: 'selfkan' },
+    { id: 'hb-ron', label: '胡', action: 'ron' },
+    { id: 'hb-kan', label: '槓', action: 'kan' },
+    { id: 'hb-pon', label: '碰', action: 'pon' },
+    { id: 'hb-chi', label: '吃', action: 'chi' },
+    { id: 'hb-pass', label: '過', action: 'pass' },
+    { id: 'hb-double', label: '比倍', action: 'double' },
+    { id: 'hb-next', label: '下一局', action: 'next' },
+    { id: 'hb-big', label: '大', action: 'big' },
+    { id: 'hb-small', label: '小', action: 'small' }
+  ];
+
+  var STATE_TIP = {};
+  // state 中文提示在 init 后填充（ST 常量已就绪）
+
+  function buildHTMLButtons() {
+    var box = document.getElementById('touchbtns');
+    if (!box) return;
+    box.innerHTML = '';
+    for (var i = 0; i < HTML_BTNS.length; i++) {
+      (function (def) {
+        var b = document.createElement('button');
+        b.id = def.id;
+        b.className = 'tbtn hidden';
+        b.textContent = def.label;
+        b.addEventListener('click', function () {
+          b.classList.add('pressed');
+          setTimeout(function () { b.classList.remove('pressed'); }, 150);
+          doAction(def.action);
+          render();
+        });
+        box.appendChild(b);
+      })(HTML_BTNS[i]);
+    }
+  }
+
+  function showBtn(id, visible, enabled) {
+    var b = document.getElementById(id);
+    if (!b) return;
+    b.classList.toggle('hidden', !visible);
+    b.disabled = !enabled;
+  }
+
+  function updateHTMLButtons() {
+    var game = UI.game;
+    if (!game || !document.getElementById('touchbtns')) return;
+    var st = game.state;
+    // 先全部隐藏
+    for (var i = 0; i < HTML_BTNS.length; i++) showBtn(HTML_BTNS[i].id, false, false);
+    if (st === ST.IDLE || st === ST.GAMEOVER) {
+      showBtn('hb-coin', true, true);
+    } else if (st === ST.ODDS) {
+      showBtn('hb-coin', true, true);
+      showBtn('hb-bet', true, game.credit > 0);
+      showBtn('hb-start', true, game.bet > 0);
+    } else if (st === ST.SELECT) {
+      showBtn('hb-confirm', true, true);
+    } else if (st === ST.DRAW) {
+      if (game.selfWin) showBtn('hb-tsumo', true, true);
+      if (game.selfKan >= 0) showBtn('hb-selfkan', true, true);
+    } else if (st === ST.CALL && game.callOptions) {
+      var o = game.callOptions;
+      if (o.hu) showBtn('hb-ron', true, true);
+      if (o.kan) showBtn('hb-kan', true, true);
+      if (o.pon) showBtn('hb-pon', true, true);
+      if (o.chi && o.chi.length) showBtn('hb-chi', true, true);
+      showBtn('hb-pass', true, true);
+    } else if (st === ST.WIN) {
+      if (game.lastWin && game.lastWin.winner === 'player' && game.lastWin.points > 0)
+        showBtn('hb-double', true, true);
+      showBtn('hb-next', true, true);
+    } else if (st === ST.DOUBLE) {
+      showBtn('hb-big', true, true);
+      showBtn('hb-small', true, true);
+    }
+    // 状态提示条
+    var tip = document.getElementById('statusbar');
+    if (tip) {
+      var msg = game.message || stateTip(st);
+      tip.textContent = msg;
+    }
+  }
+
+  function stateTip(st) {
+    if (st === ST.IDLE || st === ST.GAMEOVER) return '請投幣';
+    if (st === ST.ODDS) return '請押注或按開始';
+    if (st === ST.SELECT) return '請選擇要交換的牌，按確定';
+    if (st === ST.DRAW) return '請出牌（點選手牌兩次）';
+    if (st === ST.DISCARD) return '請出牌';
+    if (st === ST.CALL) return '請選擇：吃/碰/槓/胡/過';
+    if (st === ST.WIN) return '結算完成';
+    if (st === ST.DOUBLE) return '比倍：選大或小';
+    return '';
+  }
+
+  // render 后同步 HTML 按钮
+  var _origRender = render;
+  render = function () {
+    _origRender();
+    try { updateHTMLButtons(); } catch (e) {}
+  };
+
+  // init 时构建 HTML 按钮
+  var _origInit = init;
+  init = function (canvasId, game) {
+    _origInit(canvasId, game);
+    try { buildHTMLButtons(); updateHTMLButtons(); } catch (e) {}
+  };
+
+  g.SDMG2UI = {
+    init: init,
+    render: render,
+    doAction: function (a) { doAction(a); render(); },
+    setAnnounce: function (a, sub) { UI.announce = a; UI.announceSub = sub; render(); }
+  };
 })(typeof window !== 'undefined' ? window : globalThis);
